@@ -20,19 +20,6 @@ function addUser(user) {
     });
 }
 
-// async function addUser(user) {
-//   const [id] = await db("users").insert(user);
-
-//   return findByUserId(id);
-// }
-
-// function findByUserId(id) {
-//   return db("users")
-//     .select("id", "username")
-//     .where({ id })
-//     .first();
-// }
-
 function getUserById(id) {
   return db("users")
     .where({ id })
