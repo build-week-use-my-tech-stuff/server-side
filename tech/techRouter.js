@@ -9,10 +9,12 @@ const router = express.Router();
 router.get("/", (req, res) => {
   db.get()
     .then(tech => {
+      //   console.log(res);
       res.status(200).json(tech);
     })
     .catch(err => {
-      res.status(500).json({ message: "The tech could not be retrieved!" });
+      res.status(500).json(console.log(err));
+      //   { message: "The tech could not be retrieved!" }
     });
 });
 
@@ -20,10 +22,16 @@ router.get("/", (req, res) => {
 
 router.get("/:id", (req, res) => {
   const id = req.params.id;
-  db.getById(id)
+  db.getTechById(id)
     .then(tech => {
       if (tech) {
-        res.status(200).json(tech);
+        const techWithCom = { ...tech };
+
+        db.getTechComments(id).then(comments => {
+          techWithCom.comments = comments;
+          res.status(200).json(techWithCom);
+        });
+        // res.status(200).json(tech);
       } else {
         res.status(404).json({
           message: "The tech with the specified id could not be found!"
@@ -35,7 +43,7 @@ router.get("/:id", (req, res) => {
     });
 });
 
-// POST will create a cohort object ----------
+// POST will create a tech object ----------
 
 router.post("/", (req, res) => {
   const newTech = req.body;
@@ -56,13 +64,13 @@ router.post("/", (req, res) => {
   }
 });
 
-// DELETE will remove a cohort object with the specified id ----------
+// DELETE will remove a tech object with the specified id ----------
 
 router.delete("/:id", (req, res) => {
   const id = req.params.id;
   db.remove(id)
-    .then(cohort => {
-      if (cohort) {
+    .then(tech => {
+      if (tech) {
         res.status(204).end();
       } else {
         res.status(404).json({
@@ -75,7 +83,7 @@ router.delete("/:id", (req, res) => {
     });
 });
 
-// PUT updates a cohort object with the specified id ----------
+// PUT updates a tech object with the specified id ----------
 
 router.put("/:id", (req, res) => {
   const id = req.params.id;
@@ -93,15 +101,50 @@ router.put("/:id", (req, res) => {
         }
       })
       .catch(err => {
-        res
-          .status(500)
-          .json({ message: "The tech information could not be modified!" });
+        res.status(500).json(console.log(err));
+        //   { message: "The tech information could not be modified!" }
       });
   } else {
     res
       .status(400)
       .json({ message: "Please provide the required fields for this tech!" });
   }
+});
+
+// POST comments to a tech object with the specified id ----------
+
+router.post("/:id", (req, res) => {
+  //   const { tech_id } = req.params;
+  const { content, tech_id, user_id } = req.body;
+  //   const { user_id } = req;
+
+  if (content) {
+    db.comment(tech_id, user_id, content)
+      .then(success => {
+        res.status(201).json({ message: "Comment posted!" });
+      })
+      .catch(err => {
+        console.log(err);
+        res
+          .status(500)
+          .json({ message: "There was an error posting this comment!" });
+      });
+  } else {
+    res.status(400).json({
+      message: "Please provide content before you submit this comment!"
+    });
+  }
+
+  // if(!content || !tech_id) {
+  //   res.status(400).json({errorMessage: 'invalid input'});
+  // }
+
+  // db('reviews')
+  // .insert({user_id, book_id, review, rating})
+  // .then(id => {
+  //   res.status(201).json({id: id[0], review, rating});
+  // })
+  // .catch(err => res.status(500).json({errorMessage: err}))
 });
 
 module.exports = router;
