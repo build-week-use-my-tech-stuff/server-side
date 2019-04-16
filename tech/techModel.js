@@ -2,20 +2,25 @@ const db = require("../database/dbConfig");
 
 module.exports = {
   get,
-  getById,
+  getTechById,
   insert,
   update,
-  remove
+  remove,
+  comment,
+  getTechComments
 };
 
 function get() {
-  return db("tech");
-}
-
-function getById(id) {
   return db("tech")
-    .where({ id })
-    .first();
+    .leftJoin("users", "tech.user_id", "users.id")
+    .select({
+      name: "tech.name",
+      user: "users.username",
+      description: "tech.description",
+      cost: "tech.cost",
+      availability: "tech.availability",
+      picture: "tech.picture"
+    });
 }
 
 function insert(tech) {
@@ -23,8 +28,18 @@ function insert(tech) {
     .insert(tech)
     .returning("id")
     .then(ids => {
-      return getById(ids[0]);
+      return getTechById(ids[0]);
     });
+}
+
+function getTechComments(id) {
+  return db("comments").where({ tech_id: id });
+}
+
+function getTechById(id) {
+  return db("tech")
+    .where({ id })
+    .first();
 }
 
 function update(id, changes) {
@@ -37,4 +52,13 @@ function remove(id) {
   return db("tech")
     .where("id", id)
     .del();
+}
+
+function comment(tech_id, user_id, content) {
+  return db("comments").insert({
+    tech_id: tech_id,
+    user_id: user_id,
+    date: new Date().toString(),
+    content: content
+  });
 }
